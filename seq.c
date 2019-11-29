@@ -2,22 +2,30 @@
 #include <stdlib.h>
 #include <time.h>
 
-// #define n 0.0002
-// #define p 0.5
-// #define G 0.75
+#define n 0.0002
+#define p 0.5
+#define G 0.75
 
 #define SIZE 4
-
+#define NUMBER_OF_ITERATIONS 3
 
 int idx(int i, int j){
     return (SIZE * i + j);
 }
 
+void printMatrix(double* u){
+        printf("\n");
+        for(int i = 0; i < SIZE * SIZE; i++){
+            printf("%.10lf", u[i]);
+            printf("\t");
+            if((i+1) %  4 == 0 && i > 0){
+                printf("\n");
+            }
+        }
+}
+
 int main(){
 
-    double n = 0.0002;
-    double p = 0.5;
-    double G = 0.75;
 
     double* u1 = malloc(sizeof(double) * SIZE * SIZE );
     double* u2 = malloc(sizeof(double) * SIZE * SIZE );
@@ -34,22 +42,14 @@ int main(){
     //hit that drummmm
     u1[idx(SIZE/2, SIZE/2)] = 1;
     
-    for(int i = 0; i < SIZE * SIZE; i++){
-        printf("%lf", u1[i]);
-        printf("\t");
-        if((i+1) %  4 == 0 && i > 0){
-            printf("\n");
-        }
-    }
+    printMatrix(u1);
     
-
-     clock_t start, end;
-     double cpu_time_used;
+    clock_t start, end;
+    double cpu_time_used;
      
-     start = clock();
-     
+    start = clock();
 
-    for(int a=0; a < 3; a++)
+    for(int a=0; a < NUMBER_OF_ITERATIONS; a++)
     {    
         for(int i = 1; i <SIZE-1; i++){
             for(int j = 1; j <SIZE-1 ; j++){
@@ -74,15 +74,7 @@ int main(){
         u[idx(0,SIZE-1)]       = G * u[idx(0, SIZE-2)];
         u[idx(SIZE-1, SIZE-1)] = G * u[idx(SIZE-1, SIZE-2)];
 
-        printf("\n");
-        for(int i = 0; i < SIZE * SIZE; i++){
-            printf("%.10lf", u[i]);
-            printf("\t");
-            if((i+1) %  4 == 0 && i > 0){
-                printf("\n");
-            }
-        }
-
+        printMatrix(u);
         for(int i=0; i < SIZE * SIZE; i++){
             //u[i] = u[i];
             u2[i] = u1[i];
