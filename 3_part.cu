@@ -28,7 +28,6 @@ __global__ void foo(double *u1){
     
 }
 
-
 __global__ void updateElement(double *u, double *u1, double *u2)
 {
     int i = blockIdx.x;  
@@ -36,50 +35,53 @@ __global__ void updateElement(double *u, double *u1, double *u2)
 
     //printf("i: %d j: %d \n", i, j);
 
-    //taken care of by other threads
-    if(i == 0 || j == 0 || i == SIZE-1 || j == SIZE-1){
-        return;
-    }
-
-
-    u[idx(i, j)]=  p * 
-                            (u1[idx(i-1,j)] + u1[idx(i+1,j)] 
-                            +u1[idx(i,j-1)] + u1[idx(i,j+1)] 
-                        - 4 * u1[idx(i, j)])  
-                        + 2 * u1[idx(i, j)] - (1-n) * u2[idx(i, j)];
-
-    if(j==1){
-        u[idx(i,0)] = G * u[idx(i, j)];
-
-        //top left corner
-        if(i == 1){
-            u[idx(0,0)] = G * u[idx(1,0)];
+    //for(int j=0; j < SIZE; j++)
+    for(int i=0; i < SIZE; i++)
+    {
+        //taken care of by other threads
+        if(i == 0 || j == 0 || i == SIZE-1 || j == SIZE-1){
+            continue;
         }
 
-        //top right corner
+        u[idx(i, j)]=  p * 
+                                (u1[idx(i-1,j)] + u1[idx(i+1,j)] 
+                                +u1[idx(i,j-1)] + u1[idx(i,j+1)] 
+                            - 4 * u1[idx(i, j)])  
+                            + 2 * u1[idx(i, j)] - (1-n) * u2[idx(i, j)];
+
+        if(j==1){
+            u[idx(i,0)] = G * u[idx(i, j)];
+
+            //top left corner
+            if(i == 1){
+                u[idx(0,0)] = G * u[idx(1,0)];
+            }
+
+            //top right corner
+            if(i == SIZE-2){
+                u[idx(SIZE-1,0)] = G * u[idx(SIZE-2, 0)];
+            }
+
+        }
+
+        if(i==1){
+            u[idx(0, j)] = G * u[idx(i, j)];
+            //bottom left corner
+            if(j==SIZE-2){
+                u[idx(0,SIZE-1)] = G * u[idx(0, SIZE-2)];
+            }
+        }
+
+        if(j == SIZE-2){
+            u[idx(i, SIZE-1)]  = G * u[idx(i, j)];
+        }
+
         if(i == SIZE-2){
-            u[idx(SIZE-1,0)] = G * u[idx(SIZE-2, 0)];
-        }
-
-    }
-
-    if(i==1){
-        u[idx(0, j)] = G * u[idx(i, j)];
-        //bottom left corner
-        if(j==SIZE-2){
-            u[idx(0,SIZE-1)] = G * u[idx(0, SIZE-2)];
-        }
-    }
-
-    if(j == SIZE-2){
-        u[idx(i, SIZE-1)]  = G * u[idx(i, j)];
-    }
-
-    if(i == SIZE-2){
-        u[idx(SIZE-1, j)]  = G * u[idx(i, j)];
-        //bottom right corner
-        if(j== SIZE-2){
-            u[idx(SIZE-1, SIZE-1)] = G * u[idx(SIZE-1, SIZE-2)];
+            u[idx(SIZE-1, j)]  = G * u[idx(i, j)];
+            //bottom right corner
+            if(j== SIZE-2){
+                u[idx(SIZE-1, SIZE-1)] = G * u[idx(SIZE-1, SIZE-2)];
+            }
         }
     }
 }
@@ -134,30 +136,23 @@ int main(){
     start = clock();
 
     for(int i = 0; i < NUMBER_OF_ITERATIONS ; i++){
-            updateElement << <SIZE, SIZE >> > (u_dev, u1_dev, u2_dev);
-            //foo<<< SIZE, SIZE>>> (u1_dev);
-            cudaDeviceSynchronize();
-            
-            if(DEBUG){
-                cudaMemcpy(u, u_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToHost);
-                //cudaMemcpy(u1, u1_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToHost);
+        updateElement << <1, SIZE >> > (u_dev, u1_dev, u2_dev);
+        cudaDeviceSynchronize();
+        
+        if(DEBUG){
+            cudaMemcpy(u, u_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToHost);
+            //cudaMemcpy(u1, u1_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToHost);
 
-                //printMatrix(u);
-                printf("\n\n%lf", u[(SIZE * SIZE/2 + SIZE/2)] );
-
-            }
-            cudaMemcpy(u2_dev, u1_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToDevice);
-            cudaMemcpy(u1_dev, u_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToDevice);
-            
-            // copyMatrix <<<SIZE, SIZE>>> (u2_dev, u1_dev);
-            // cudaDeviceSynchronize();
-            // copyMatrix <<<SIZE, SIZE>>> (u1_dev, u_dev);
-
+            //printMatrix(u);
+            printf("\n\n%lf", u[(SIZE * SIZE/2 + SIZE/2)] );
+        }
+        cudaMemcpy(u2_dev, u1_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToDevice);
+        cudaMemcpy(u1_dev, u_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToDevice);
     }
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 
-    printf("\n Part 2 time: \t%lf \n", cpu_time_used);
+    printf("\n Part 3_many threads, time: \t%lf \n", cpu_time_used);
     cudaFree(u_dev);
     cudaFree(u1_dev);
     cudaFree(u2_dev);

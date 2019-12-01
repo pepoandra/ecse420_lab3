@@ -1,0 +1,4 @@
+nvcc 3_part_blocks.cu -o part3a
+nvcc 3_part.cu -o part3b
+nvcc parallel.cu -o part2
+gcc seq.c -o part1

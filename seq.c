@@ -6,8 +6,10 @@
 #define p 0.5
 #define G 0.75
 
-#define SIZE 512
-#define NUMBER_OF_ITERATIONS 10
+#define SIZE 1024
+#define NUMBER_OF_ITERATIONS 100
+#define DEBUG 0
+
 
 int idx(int i, int j){
     return (SIZE * i + j);
@@ -25,7 +27,6 @@ void printMatrix(double* u){
 }
 
 int main(){
-
 
     double* u1 = malloc(sizeof(double) * SIZE * SIZE );
     double* u2 = malloc(sizeof(double) * SIZE * SIZE );
@@ -75,24 +76,22 @@ int main(){
         u[idx(SIZE-1, SIZE-1)] = G * u[idx(SIZE-1, SIZE-2)];
 
         
-        
-        //printMatrix(u);
-        printf("\n\n%lf", u[idx(SIZE/2, SIZE/2)]);
+        if(DEBUG){
+            //printMatrix(u);
+            printf("\n\n%lf", u[idx(SIZE/2, SIZE/2)]);
+        }
 
-        
         for(int i=0; i < SIZE * SIZE; i++){
             //u[i] = u[i];
             u2[i] = u1[i];
             u1[i] = u[i];
         }
-
     }
-
 
      end = clock();
      cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 
-    printf("\nExecution time: \t%lf \n", cpu_time_used);
+    printf("\n Part 1 time: \t%lf \n", cpu_time_used);
     free(u1);
     free(u2);
     free(u);
