@@ -7,37 +7,45 @@
 #include "device_launch_parameters.h"
 
 
-// #define n 0.0002
-// #define p 0.5
-// #define G 0.75
+#define n 0.0002
+#define p 0.5
+#define G 0.75
 
 #define SIZE 4
 #define NUMBER_OF_ITERATIONS 3
 #define DEBUG 1
 
 
-int idx(int i, int j){
+__device__ int idx(int i, int j){
     return (SIZE * i + j);
 }
 
 
-__global__ updateElemente(double *u, double *u1, double *u2)
+__global__ void foo(double *u1){
+    int i = blockIdx.x;  
+    int j = threadIdx.x;
+    printf("u1[%d,%d]: %.3lf  \t",i, j,  u1[idx(i,j)] );
+    
+}
+
+__global__ void updateElement(double *u, double *u1, double *u2)
 {
     int i = blockIdx.x;  
     int j = threadIdx.x;
 
+    //printf("i: %d j: %d \n", i, j);
 
     //taken care of by other threads
     if(i == 0 || j == 0 || i == SIZE-1 || j == SIZE-1){
         return;
     }
-    
+
+
     u[idx(i, j)]=  p * 
                             (u1[idx(i-1,j)] + u1[idx(i+1,j)] 
                             +u1[idx(i,j-1)] + u1[idx(i,j+1)] 
                         - 4 * u1[idx(i, j)])  
                         + 2 * u1[idx(i, j)] - (1-n) * u2[idx(i, j)];
-
 
     if(j==1){
         u[idx(i,0)] = G * u[idx(i, j)];
@@ -90,44 +98,51 @@ void printMatrix(double* u){
 
 int main(){
 
-    double* u = malloc(sizeof(double) * SIZE * SIZE );
-    double* u1 = malloc(sizeof(double) * SIZE * SIZE );
-    double* u2 = malloc(sizeof(double) * SIZE * SIZE );
+    double* u  = static_cast<double*>(malloc(sizeof(double) * SIZE * SIZE ));
+    double* u1 = static_cast<double*>(malloc(sizeof(double) * SIZE * SIZE ));
+    double* u2 = static_cast<double*>(malloc(sizeof(double) * SIZE * SIZE ));
 
 
     //initialize to 0
     for(int i = 0; i < SIZE * SIZE; i++){
-        u[i] = 0;
+        //u[i] = 0;
         u1[i] = 0;
         u2[i] = 0;
     }
 
     //hit that drummmm
-    u1[idx(SIZE/2, SIZE/2)] = 1;
-    
+    //u1[idx(SIZE/2, SIZE/2)] = 1;
+    u1[(SIZE * SIZE/2 + SIZE/2)] = 1;
     printMatrix(u1);
 
     clock_t start, end;
     double cpu_time_used;
     
-    double* u_dev, *u1_dev, *u2_dev, *u_dev; 
-
-    cudaMalloc(&u_dev, SIZE*SIZE);
-    cudaMalloc(&u1_dev, SIZE*SIZE);
-    cudaMalloc(&u2_dev, SIZE*SIZE);    
+    double* u_dev, *u2_dev; 
+    double *u1_dev;
+    cudaMalloc((void **)&u_dev, SIZE*SIZE *sizeof(double));
+    cudaMalloc((void **)&u1_dev, SIZE*SIZE *sizeof(double));
+    cudaMalloc((void **)&u2_dev, SIZE*SIZE *sizeof(double));  
+  
+  
 
     cudaMemcpy(u_dev, u, SIZE*SIZE *sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(u1_dev, u1, SIZE*SIZE *sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(u2_dev, u2, SIZE*SIZE *sizeof(double), cudaMemcpyHostToDevice);
 
+    u1[(SIZE * SIZE/2 + SIZE/2)] = 1;
+
     start = clock();
 
     for(int i = 0; i < NUMBER_OF_ITERATIONS ; i++){
-            updateElemente << <SIZE, SIZE >> > (u_dev, u1_dev, u2_dev, u_dev);
+            updateElement << <SIZE, SIZE >> > (u_dev, u1_dev, u2_dev);
+            //foo<<< SIZE, SIZE>>> (u1_dev);
             cudaDeviceSynchronize();
             
             if(DEBUG){
                 cudaMemcpy(u, u_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToHost);
+                cudaMemcpy(u1, u1_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToHost);
+
                 printMatrix(u);
             }
 
@@ -138,17 +153,11 @@ int main(){
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
 
-
-    cudaMemcpy(y, d_y, N*sizeof(float), cudaMemcpyDeviceToHost);
-
-
-
-
-
-
     printf("\nExecution time: \t%lf \n", cpu_time_used);
+    cudaFree(u_dev);
+    cudaFree(u1_dev);
+    cudaFree(u2_dev);
     free(u);
     free(u1);
     free(u2);
-    free(u);
 }
