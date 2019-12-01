@@ -6,8 +6,8 @@
 #define p 0.5
 #define G 0.75
 
-#define SIZE 4
-#define NUMBER_OF_ITERATIONS 3
+#define SIZE 512
+#define NUMBER_OF_ITERATIONS 10
 
 int idx(int i, int j){
     return (SIZE * i + j);
@@ -16,7 +16,7 @@ int idx(int i, int j){
 void printMatrix(double* u){
         printf("\n");
         for(int i = 0; i < SIZE * SIZE; i++){
-            printf("%.10lf", u[i]);
+            printf("%.3lf", u[i]);
             printf("\t");
             if((i+1) %  4 == 0 && i > 0){
                 printf("\n");
@@ -42,7 +42,7 @@ int main(){
     //hit that drummmm
     u1[idx(SIZE/2, SIZE/2)] = 1;
     
-    printMatrix(u1);
+    //printMatrix(u1);
     
     clock_t start, end;
     double cpu_time_used;
@@ -74,15 +74,18 @@ int main(){
         u[idx(0,SIZE-1)]       = G * u[idx(0, SIZE-2)];
         u[idx(SIZE-1, SIZE-1)] = G * u[idx(SIZE-1, SIZE-2)];
 
-        printMatrix(u);
+        
+        
+        //printMatrix(u);
+        printf("\n\n%lf", u[idx(SIZE/2, SIZE/2)]);
+
+        
         for(int i=0; i < SIZE * SIZE; i++){
             //u[i] = u[i];
             u2[i] = u1[i];
-        }
-
-        for(int i=0; i < SIZE * SIZE; i++){
             u1[i] = u[i];
         }
+
     }
 
 

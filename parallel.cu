@@ -11,8 +11,8 @@
 #define p 0.5
 #define G 0.75
 
-#define SIZE 4
-#define NUMBER_OF_ITERATIONS 3
+#define SIZE 512
+#define NUMBER_OF_ITERATIONS 10
 #define DEBUG 1
 
 
@@ -87,7 +87,7 @@ __global__ void updateElement(double *u, double *u1, double *u2)
 void printMatrix(double* u){
         printf("\n");
         for(int i = 0; i < SIZE * SIZE; i++){
-            printf("%.10lf", u[i]);
+            printf("%.3lf", u[i]);
             printf("\t");
             if((i+1) %  4 == 0 && i > 0){
                 printf("\n");
@@ -113,7 +113,7 @@ int main(){
     //hit that drummmm
     //u1[idx(SIZE/2, SIZE/2)] = 1;
     u1[(SIZE * SIZE/2 + SIZE/2)] = 1;
-    printMatrix(u1);
+    //printMatrix(u1);
 
     clock_t start, end;
     double cpu_time_used;
@@ -124,8 +124,6 @@ int main(){
     cudaMalloc((void **)&u1_dev, SIZE*SIZE *sizeof(double));
     cudaMalloc((void **)&u2_dev, SIZE*SIZE *sizeof(double));  
   
-  
-
     cudaMemcpy(u_dev, u, SIZE*SIZE *sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(u1_dev, u1, SIZE*SIZE *sizeof(double), cudaMemcpyHostToDevice);
     cudaMemcpy(u2_dev, u2, SIZE*SIZE *sizeof(double), cudaMemcpyHostToDevice);
@@ -141,14 +139,14 @@ int main(){
             
             if(DEBUG){
                 cudaMemcpy(u, u_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToHost);
-                cudaMemcpy(u1, u1_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToHost);
+                //cudaMemcpy(u1, u1_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToHost);
 
-                printMatrix(u);
+                //printMatrix(u);
+                printf("\n\n%lf", u[(SIZE * SIZE/2 + SIZE/2)] );
+
             }
-
             cudaMemcpy(u2_dev, u1_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToDevice);
-            cudaMemcpy(u1_dev, u1_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToDevice);
-    
+            cudaMemcpy(u1_dev, u_dev, SIZE*SIZE *sizeof(double), cudaMemcpyDeviceToDevice);
     }
     end = clock();
     cpu_time_used = ((double) (end - start)) / CLOCKS_PER_SEC;
