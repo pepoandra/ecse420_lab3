@@ -18,7 +18,7 @@ void printMatrix(double* u){
         for(int i = 0; i < SIZE * SIZE; i++){
             printf("%.3lf", u[i]);
             printf("\t");
-            if((i+1) %  4 == 0 && i > 0){
+            if((i+1) %  SIZE == 0 && i > 0){
                 printf("\n");
             }
         }
